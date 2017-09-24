@@ -46,9 +46,11 @@ struct Noun
 {
 	std::string Word;
 	std::string Description;
+	int Location;
 	int Code;
 	int Weight;
 	bool CanCarry;
+	bool CanOpen;
 	bool IsWeapon;
 };
 bool GetCommand(std::string, std::string&, std::string&);
@@ -56,7 +58,7 @@ void SetDirections(Word*);
 void SetVerbs(Word*);
 void SetNouns(Noun*);
 bool Parse(int& OUTLocation, std::string, std::string, Word* Directions, Word* Verbs, Noun* Nouns, Room*);
-void LookAround(int Location, Room*, Word*);
+void LookAround(int Location, Room*, Word*, Noun*);
 
 int main()
 {
@@ -287,51 +289,65 @@ void SetVerbs(Word* Verbs)
 
 void SetNouns(Noun* Nouns)
 {
+	Nouns[LabDoor].CanOpen = true;
 	Nouns[LabDoor].CanCarry = false;
+	Nouns[LabDoor].Location = AmmoStoreS;
 	Nouns[LabDoor].Code = LabDoor;
-	Nouns[LabDoor].Description = "a heavy-set door.";
+	Nouns[LabDoor].Description = "A heavy-set door hidden in the darkest corner.";
 	Nouns[LabDoor].IsWeapon = false;
 	Nouns[LabDoor].Weight = 100;
 	Nouns[LabDoor].Word = "DOOR";
 
+	Nouns[Tape].CanOpen = false;
 	Nouns[Tape].CanCarry = true;
 	Nouns[Tape].Code = Tape;
-	Nouns[Tape].Description = "a roll of duct tape.";
+	Nouns[Tape].Location = Dorm;
+	Nouns[Tape].Description = "A roll of duct tape.";
 	Nouns[Tape].IsWeapon = false;
 	Nouns[Tape].Weight = 5;
 	Nouns[Tape].Word = "TAPE";
 
+	Nouns[Knife].CanOpen = false;
 	Nouns[Knife].CanCarry = true;
 	Nouns[Knife].Code = Knife;
-	Nouns[Knife].Description = "a honed kitchen blade.";
+	Nouns[Knife].Location = Kitchen;
+	Nouns[Knife].Description = "A honed kitchen blade.";
 	Nouns[Knife].IsWeapon = true;
 	Nouns[Knife].Weight = 5;
 	Nouns[Knife].Word = "KNIFE";
 
+	Nouns[BrokenLever].CanOpen = false;
 	Nouns[BrokenLever].CanCarry = false;
 	Nouns[BrokenLever].Code = BrokenLever;
-	Nouns[BrokenLever].Description = "a snapped lever.";
+	Nouns[BrokenLever].Location = Hangar;
+	Nouns[BrokenLever].Description = "A snapped lever.";
 	Nouns[BrokenLever].IsWeapon = false;
 	Nouns[BrokenLever].Weight = 100;
 	Nouns[BrokenLever].Word = "LEVER";
 
+	Nouns[Wrench].CanOpen = false;
 	Nouns[Wrench].CanCarry = true;
 	Nouns[Wrench].Code = Wrench;
-	Nouns[Wrench].Description = "a worn torque wrench.";
+	Nouns[Wrench].Location = MaintRoom;
+	Nouns[Wrench].Description = "A worn torque wrench.";
 	Nouns[Wrench].IsWeapon = true;
 	Nouns[Wrench].Weight = 15;
 	Nouns[Wrench].Word = "WRENCH";
 
+	Nouns[OfficeDrawer].CanOpen = true;
 	Nouns[OfficeDrawer].CanCarry = false;
 	Nouns[OfficeDrawer].Code = OfficeDrawer;
-	Nouns[OfficeDrawer].Description = "a finely crafted mahogany drawer.";
+	Nouns[OfficeDrawer].Location = Office;
+	Nouns[OfficeDrawer].Description = "A finely crafted mahogany drawer.";
 	Nouns[OfficeDrawer].IsWeapon = false;
 	Nouns[OfficeDrawer].Weight = 100;
 	Nouns[OfficeDrawer].Word = "DRAWER";
 
+	Nouns[Battery].CanOpen = false;
 	Nouns[Battery].CanCarry = true;
 	Nouns[Battery].Code = Battery;
-	Nouns[Battery].Description = "a gently humming battery.";
+	Nouns[Battery].Location = Lab;
+	Nouns[Battery].Description = "A gently humming battery.";
 	Nouns[Battery].IsWeapon = false;
 	Nouns[Battery].Weight = 20;
 	Nouns[Battery].Word = "BATTERY";
@@ -339,6 +355,8 @@ void SetNouns(Noun* Nouns)
 
 bool Parse(int& OUTLocation, std::string Word1, std::string Word2, Word* Directions, Word* Verbs, Noun* Nouns, Room* Rooms)
 {
+	//Move player
+	if(Word1 == "GO" || Word1 == "MOVE") { Word1 = Word2; }
 	for (int i = 0; i < DIRECTIONSNo; i++) 
 	{
 		if (Word1 == Directions[i].word) 
@@ -346,7 +364,8 @@ bool Parse(int& OUTLocation, std::string Word1, std::string Word2, Word* Directi
 			if (Rooms[OUTLocation].Exits[Directions[i].Code] != NONE) 
 			{
 				OUTLocation = Rooms[OUTLocation].Exits[Directions[i].Code];
-				std::cout << "You find yourself standing in " << Rooms[OUTLocation].Description << std::endl;
+				std::cout << "You find yourself ";
+				LookAround(OUTLocation, Rooms, Directions, Nouns);
 				return true;
 			}
 			else
@@ -356,7 +375,8 @@ bool Parse(int& OUTLocation, std::string Word1, std::string Word2, Word* Directi
 			}
 		}
 	}
-	//'Trap' verb and encode.
+
+	//Search Word one for valid verb and encode.
 	int VerbCode = NONE;
 	for (int i = 0; i < VERBSNo; i++) 
 	{
@@ -366,7 +386,7 @@ bool Parse(int& OUTLocation, std::string Word1, std::string Word2, Word* Directi
 			break;
 		}
 	}
-	//'Trap' noun and encode.
+	//Search Word2 for valid noun and encode. (Nouns must be Word2)
 	int NounCode = NONE;
 	if (Word2 != "")
 	{
@@ -379,9 +399,66 @@ bool Parse(int& OUTLocation, std::string Word1, std::string Word2, Word* Directi
 			}
 		}
 	}
+
 	if (VerbCode == Look) 
 	{
-		LookAround(OUTLocation, Rooms, Directions);
+		std::cout << "You are ";
+		LookAround(OUTLocation, Rooms, Directions, Nouns);
+		return true;
+	}
+	if (VerbCode == Open) 
+	{
+		if (NounCode == NONE)
+		{
+			std::cout << "What do you want to open?\n";
+			std::getline(std::cin, Word2);
+			//Capitalise word.
+			for (unsigned int i = 0; i < Word2.size(); i++)
+			{
+				if (islower(Word2.at(i)))
+				{ Word2.at(i) = toupper(Word2.at(i)); }
+			}
+			//Check if noun.
+			for (int i = 0; i < NOUNSNo; i++)
+			{
+				if (Word2 == Nouns[i].Word)
+				{
+					NounCode = Nouns[i].Code;
+					break;
+				}
+			}
+		}
+		if (NounCode == LabDoor) 
+		{
+			if (OUTLocation == AmmoStoreS || OUTLocation == Lab)
+			{
+				if (Nouns[LabDoor].CanOpen == true)
+				{
+					std::cout << "The heavy door swings open in a whirl of dust, revealing an array of blinking lights in the gloom.\n";
+					Nouns[LabDoor].CanOpen = false;
+					Nouns[LabDoor].Description = "The laboratory door.\n";
+				}
+				else { std::cout << "The door is already open...\n"; }
+			}
+			else { std::cout << "I cant see a door anywhere..\n"; }
+			return true;
+		}
+		if (NounCode == OfficeDrawer) 
+		{
+			if (OUTLocation == Office) 
+			{
+				if (Nouns[OfficeDrawer].CanOpen == true)
+				{
+					std::cout << "You slide the drawer open to reveal a hastily scrawled note.\n";
+					Nouns[OfficeDrawer].CanOpen = false;
+					Nouns[OfficeDrawer].Description = "An open drawer with the code 420Bi4tch written inside.\n";
+				}
+				else { std::cout << "The drawer is already open...\n"; }
+			}
+			else { std::cout << "I cant see a drawer anywhere..\n"; }
+			return true;
+		}
+		else { std::cout << "I dont think you can open that...\n"; }
 		return true;
 	}
 	if (VerbCode == Help)
@@ -398,15 +475,31 @@ bool Parse(int& OUTLocation, std::string Word1, std::string Word2, Word* Directi
 	return false;
 }
 
-void LookAround(int Location, Room* Rooms, Word* Directions)
+void LookAround(int Location, Room* Rooms, Word* Directions, Noun* Nouns)
 {
-	std::cout << "You are in " << Rooms[Location].Description << std::endl;
-	for (int i = 0; i < DIRECTIONSNo; i++) 
+	//"You find yourself" after moving, "You are" when look(around) evoked by player
+	std::cout << "standing in " << Rooms[Location].Description << std::endl;
+	int NounCount = 0;
+	std::cout << "You look around and see:\n";
+	for (int i = 0; i < NOUNSNo; i++) 
+	{
+		if (Location == Nouns[i].Location)
+		{
+			std::cout << Nouns[i].Description << std::endl;
+			NounCount++;
+		}
+	}
+	if (NounCount == 0)
+	{ std::cout << "Nothing interesting...\n\n"; }
+	else { std::cout << std::endl; }
+	std::cout << "There is an exit:\n";
+	for (int i = 0; i < DIRECTIONSNo; i++)
 	{
 		if (Rooms[Location].Exits[i] != NONE)
 		{
-			std::cout << "There is an exit ";
-			for (int j = 0; j < Directions[i].word.size(); j++)
+			//Capitalise direction
+			std::cout << Directions[i].word[0];
+			for (unsigned int j = 1; j < Directions[i].word.size(); j++)
 			{
 				char Lower = tolower(Directions[i].word[j]);
 				std::cout << Lower;
@@ -414,4 +507,5 @@ void LookAround(int Location, Room* Rooms, Word* Directions)
 			std::cout << " to " << Rooms[Rooms[Location].Exits[i]].Name << std::endl;
 		}
 	}
+	std::cout << std::endl;
 }
