@@ -23,6 +23,7 @@ enum ERooms {
 const int ROOMSNo = 12;
 enum EDirections {North, East, South, West};
 const int NONE = -1;
+const int LOCKED = -5;
 const int DIRECTIONSNo = 4;
 struct Room 
 {
@@ -57,18 +58,20 @@ bool GetCommand(std::string, std::string&, std::string&);
 void SetDirections(Word*);
 void SetVerbs(Word*);
 void SetNouns(Noun*);
-bool Parse(int& OUTLocation, std::string, std::string, Word* Directions, Word* Verbs, Noun* Nouns, Room*);
+bool Parse(int& OUTLocation, std::string, std::string, Word* Directions, Word* Verbs, Noun* Nouns, Room*, Character&);
 void LookAround(int Location, Room*, Word*, Noun*);
 
 int main()
 {
 	GameIntro();
-	std::string Input, Word1, Word2;
+	Character Player(20);
+
 	//Create array of rooms and set their values.
 	Room Rooms[ROOMSNo];
 	SetRooms(Rooms);
 	int Location = Reception; //Setting start location
 	std::cout << "You wake up in " << Rooms[Location].Description << std::endl;
+
 	//Create any words needed for parsing input.
 	Word Directions[DIRECTIONSNo];
 	SetDirections(Directions);
@@ -77,16 +80,17 @@ int main()
 	Noun Nouns[NOUNSNo];
 	SetNouns(Nouns);
 
+	std::string Input, Word1, Word2;
 	while (Word1 != "QUIT")
 	{
 		Input.clear();
-		std::cout << "What next o' wise one?\n";
+		std::cout << "What next o' wise "<< Player.GetCharName() << " ?\n";
 		std::getline(std::cin, Input);
 		Word1.clear();
 		Word2.clear();
 		GetCommand(Input, Word1, Word2);
 
-		Parse(Location, Word1, Word2, Directions, Verbs, Nouns, Rooms);
+		Parse(Location, Word1, Word2, Directions, Verbs, Nouns, Rooms, Player);
 	}
 	return 0;
 }
@@ -235,7 +239,7 @@ void SetRooms(Room* Room)
 	Room[AmmoStoreS].Description.assign("the southern end of a long warehouse filled with crates of ammo and munitions.");
 	Room[AmmoStoreS].Exits[North] = AmmoStoreN;
 	Room[AmmoStoreS].Exits[East] = NONE;
-	Room[AmmoStoreS].Exits[South] = Lab;
+	Room[AmmoStoreS].Exits[South] = LOCKED;
 	Room[AmmoStoreS].Exits[West] = MaintRoom;
 
 	Room[Dorm].Name.assign("a cramped dormitory.");
@@ -247,7 +251,7 @@ void SetRooms(Room* Room)
 
 	Room[Lab].Name.assign("a well hidden laboratory.");
 	Room[Lab].Description.assign("a laboratory brimming with equipment and secrets.");
-	Room[Lab].Exits[North] = AmmoStoreS;
+	Room[Lab].Exits[North] = LOCKED;
 	Room[Lab].Exits[East] = NONE;
 	Room[Lab].Exits[South] = NONE;
 	Room[Lab].Exits[West] = NONE;
@@ -353,7 +357,7 @@ void SetNouns(Noun* Nouns)
 	Nouns[Battery].Word = "BATTERY";
 }
 
-bool Parse(int& OUTLocation, std::string Word1, std::string Word2, Word* Directions, Word* Verbs, Noun* Nouns, Room* Rooms)
+bool Parse(int& OUTLocation, std::string Word1, std::string Word2, Word* Directions, Word* Verbs, Noun* Nouns, Room* Rooms, Character& Player)
 {
 	//Move player
 	if(Word1 == "GO" || Word1 == "MOVE") { Word1 = Word2; }
@@ -361,11 +365,16 @@ bool Parse(int& OUTLocation, std::string Word1, std::string Word2, Word* Directi
 	{
 		if (Word1 == Directions[i].word) 
 		{
-			if (Rooms[OUTLocation].Exits[Directions[i].Code] != NONE) 
+			if (Rooms[OUTLocation].Exits[Directions[i].Code] > NONE) 
 			{
 				OUTLocation = Rooms[OUTLocation].Exits[Directions[i].Code];
 				std::cout << "You find yourself ";
 				LookAround(OUTLocation, Rooms, Directions, Nouns);
+				return true;
+			}
+			else if (Rooms[OUTLocation].Exits[Directions[i].Code] == LOCKED)
+			{ 
+				std::cout << "The way is locked.\n"; 
 				return true;
 			}
 			else
@@ -437,6 +446,8 @@ bool Parse(int& OUTLocation, std::string Word1, std::string Word2, Word* Directi
 					std::cout << "The heavy door swings open in a whirl of dust, revealing an array of blinking lights in the gloom.\n";
 					Nouns[LabDoor].CanOpen = false;
 					Nouns[LabDoor].Description = "The laboratory door.\n";
+					Rooms[Lab].Exits[North] = AmmoStoreS;
+					Rooms[AmmoStoreS].Exits[South] = Lab;
 				}
 				else { std::cout << "The door is already open...\n"; }
 			}
@@ -493,9 +504,10 @@ void LookAround(int Location, Room* Rooms, Word* Directions, Noun* Nouns)
 	{ std::cout << "Nothing interesting...\n\n"; }
 	else { std::cout << std::endl; }
 	std::cout << "There is an exit:\n";
+	int LockedDirection = 0;
 	for (int i = 0; i < DIRECTIONSNo; i++)
 	{
-		if (Rooms[Location].Exits[i] != NONE)
+		if (Rooms[Location].Exits[i] > NONE)
 		{
 			//Capitalise direction
 			std::cout << Directions[i].word[0];
@@ -506,6 +518,19 @@ void LookAround(int Location, Room* Rooms, Word* Directions, Noun* Nouns)
 			}
 			std::cout << " to " << Rooms[Rooms[Location].Exits[i]].Name << std::endl;
 		}
+		else if (Rooms[Location].Exits[i] == LOCKED)
+		{ LockedDirection = Directions[i].Code; }
 	}
-	std::cout << std::endl;
+	//Checking for locked doors, if multiple needed, use a LockedDirection array.
+	if (LockedDirection > 0)
+	{
+		std::cout << "The way ";
+		for (unsigned int j = 0; j < Directions[LockedDirection].word.size(); j++)
+		{
+			char Lower = tolower(Directions[LockedDirection].word[j]);
+			std::cout << Lower;
+		}
+		std::cout << " is locked\n";
+		std::cout << std::endl;
+	}
 }

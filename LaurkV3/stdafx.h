@@ -13,6 +13,7 @@
 #include <string>
 #include <vector>
 #include <cctype>
+#include "Character.h"
 
 
 // TODO: reference additional headers your program requires here
