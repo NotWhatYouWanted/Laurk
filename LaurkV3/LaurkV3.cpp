@@ -204,6 +204,7 @@ void SetNouns(Noun* Nouns)
 	Nouns[LabDoor].IsWeapon = false;
 	Nouns[LabDoor].Weight = 100;
 	Nouns[LabDoor].Word = "DOOR";
+	Nouns[LabDoor].Name = "Lab Door";
 
 	Nouns[Tape].CanOpen = false;
 	Nouns[Tape].CanCarry = true;
@@ -213,6 +214,7 @@ void SetNouns(Noun* Nouns)
 	Nouns[Tape].IsWeapon = false;
 	Nouns[Tape].Weight = 5;
 	Nouns[Tape].Word = "TAPE";
+	Nouns[Tape].Name = "Tape";
 
 	Nouns[Knife].CanOpen = false;
 	Nouns[Knife].CanCarry = true;
@@ -222,6 +224,7 @@ void SetNouns(Noun* Nouns)
 	Nouns[Knife].IsWeapon = true;
 	Nouns[Knife].Weight = 5;
 	Nouns[Knife].Word = "KNIFE";
+	Nouns[Knife].Name = "Knife";
 
 	Nouns[BrokenLever].CanOpen = false;
 	Nouns[BrokenLever].CanCarry = false;
@@ -231,6 +234,7 @@ void SetNouns(Noun* Nouns)
 	Nouns[BrokenLever].IsWeapon = false;
 	Nouns[BrokenLever].Weight = 100;
 	Nouns[BrokenLever].Word = "LEVER";
+	Nouns[BrokenLever].Name = "Broken Lever";
 
 	Nouns[Wrench].CanOpen = false;
 	Nouns[Wrench].CanCarry = true;
@@ -240,6 +244,7 @@ void SetNouns(Noun* Nouns)
 	Nouns[Wrench].IsWeapon = true;
 	Nouns[Wrench].Weight = 15;
 	Nouns[Wrench].Word = "WRENCH";
+	Nouns[Wrench].Name = "Rusty Wrench";
 
 	Nouns[OfficeDrawer].CanOpen = true;
 	Nouns[OfficeDrawer].CanCarry = false;
@@ -249,6 +254,7 @@ void SetNouns(Noun* Nouns)
 	Nouns[OfficeDrawer].IsWeapon = false;
 	Nouns[OfficeDrawer].Weight = 100;
 	Nouns[OfficeDrawer].Word = "DRAWER";
+	Nouns[OfficeDrawer].Name = "Drawer";
 
 	Nouns[Battery].CanOpen = false;
 	Nouns[Battery].CanCarry = true;
@@ -258,6 +264,7 @@ void SetNouns(Noun* Nouns)
 	Nouns[Battery].IsWeapon = false;
 	Nouns[Battery].Weight = 20;
 	Nouns[Battery].Word = "BATTERY";
+	Nouns[Battery].Name = "Smooth Battery";
 }
 
 bool GetCommand(std::string Input, std::string& OUTWord1, std::string& OUTWord2)
@@ -384,10 +391,28 @@ bool Parse(int& OUTLocation, std::string Word1, std::string Word2, Word* Directi
 		}
 	}
 
+	if (VerbCode == Inventory)
+	{
+		Player.ReadInventory();
+		return true;
+	}
 	if (VerbCode == Look) 
 	{
 		std::cout << "You are ";
 		LookAround(OUTLocation, Rooms, Directions, Nouns);
+		return true;
+	}
+	if (VerbCode == Get) 
+	{
+		if (Nouns[NounCode].Location == OUTLocation)
+		{
+			if (Nouns[NounCode].CanCarry)
+			{
+				Player.PickUp(&Nouns[NounCode]);
+			}
+			else { std::cout << "You cant pick that up...\n"; }
+		}
+		else { std::cout << "I cant see a "<< Nouns[NounCode].Name << " anywhere..\n"; }
 		return true;
 	}
 	if (VerbCode == Open) 

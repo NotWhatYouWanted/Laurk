@@ -15,14 +15,14 @@ class Inventory
 {
 public:
 	Inventory();
-	void PickUp(Noun);
-	void DropItem(Noun);
+	void PickUp(Noun*);
+	void DropItem(Noun*);
 	void ReadInventory();
 
 private:
 	int CurrentWeight;
 	const int MaxWeight = 50;
-	std::vector<Noun> InventoryItems;
+	std::vector<Noun*> InventoryItems;
 	const std::string OverweightWarning = "Your bag is too heavy!\n";
 
 };

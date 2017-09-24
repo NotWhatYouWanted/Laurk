@@ -27,6 +27,7 @@ struct Word
 struct Noun
 {
 	std::string Word;
+	std::string Name;
 	std::string Description;
 	int Location;
 	int Code;
