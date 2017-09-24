@@ -33,17 +33,29 @@ struct Room
 void SetRooms(Room*);
 
 //User input handling
-enum EVerbs {Inventory, Look, Use, Get, Drop, Open, Close, Help};
-const int VERBSNo = 8;
+enum EVerbs {Inventory, Look, Use, Get, Drop, Open, Close, Attack, Help};
+const int VERBSNo = 9;
+enum ENouns {LabDoor, Tape, Knife, BrokenLever, Wrench, OfficeDrawer, Battery};
+const int NOUNSNo = 7;
 struct Word
 {
 	std::string word;
 	int Code;
 };
+struct Noun 
+{
+	std::string Word;
+	std::string Description;
+	int Code;
+	int Weight;
+	bool CanCarry;
+	bool IsWeapon;
+};
 bool GetCommand(std::string, std::string&, std::string&);
 void SetDirections(Word*);
 void SetVerbs(Word*);
-bool Parse(int& OUTLocation, std::string, std::string, Word* Directions,Word* Verbs, Room*);
+void SetNouns(Noun*);
+bool Parse(int& OUTLocation, std::string, std::string, Word* Directions, Word* Verbs, Noun* Nouns, Room*);
 void LookAround(int Location, Room*, Word*);
 
 int main()
@@ -53,13 +65,15 @@ int main()
 	//Create array of rooms and set their values.
 	Room Rooms[ROOMSNo];
 	SetRooms(Rooms);
-	int Location = Reception;
+	int Location = Reception; //Setting start location
 	std::cout << "You wake up in " << Rooms[Location].Description << std::endl;
 	//Create any words needed for parsing input.
 	Word Directions[DIRECTIONSNo];
 	SetDirections(Directions);
 	Word Verbs[VERBSNo];
 	SetVerbs(Verbs);
+	Noun Nouns[NOUNSNo];
+	SetNouns(Nouns);
 
 	while (Word1 != "QUIT")
 	{
@@ -70,7 +84,7 @@ int main()
 		Word2.clear();
 		GetCommand(Input, Word1, Word2);
 
-		Parse(Location, Word1, Word2, Directions, Verbs, Rooms);
+		Parse(Location, Word1, Word2, Directions, Verbs, Nouns, Rooms);
 	}
 	return 0;
 }
@@ -265,11 +279,65 @@ void SetVerbs(Word* Verbs)
 	Verbs[Open].word = "OPEN";
 	Verbs[Close].Code = Close;
 	Verbs[Close].word = "CLOSE";
+	Verbs[Attack].Code = Attack;
+	Verbs[Attack].word = "ATTACK";
 	Verbs[Help].Code = Help;
-	Verbs[Help].word = "Help";
+	Verbs[Help].word = "HELP";
 }
 
-bool Parse(int& OUTLocation, std::string Word1, std::string Word2, Word* Directions, Word* Verbs, Room* Rooms)
+void SetNouns(Noun* Nouns)
+{
+	Nouns[LabDoor].CanCarry = false;
+	Nouns[LabDoor].Code = LabDoor;
+	Nouns[LabDoor].Description = "a heavy-set door.";
+	Nouns[LabDoor].IsWeapon = false;
+	Nouns[LabDoor].Weight = 100;
+	Nouns[LabDoor].Word = "DOOR";
+
+	Nouns[Tape].CanCarry = true;
+	Nouns[Tape].Code = Tape;
+	Nouns[Tape].Description = "a roll of duct tape.";
+	Nouns[Tape].IsWeapon = false;
+	Nouns[Tape].Weight = 5;
+	Nouns[Tape].Word = "TAPE";
+
+	Nouns[Knife].CanCarry = true;
+	Nouns[Knife].Code = Knife;
+	Nouns[Knife].Description = "a honed kitchen blade.";
+	Nouns[Knife].IsWeapon = true;
+	Nouns[Knife].Weight = 5;
+	Nouns[Knife].Word = "KNIFE";
+
+	Nouns[BrokenLever].CanCarry = false;
+	Nouns[BrokenLever].Code = BrokenLever;
+	Nouns[BrokenLever].Description = "a snapped lever.";
+	Nouns[BrokenLever].IsWeapon = false;
+	Nouns[BrokenLever].Weight = 100;
+	Nouns[BrokenLever].Word = "LEVER";
+
+	Nouns[Wrench].CanCarry = true;
+	Nouns[Wrench].Code = Wrench;
+	Nouns[Wrench].Description = "a worn torque wrench.";
+	Nouns[Wrench].IsWeapon = true;
+	Nouns[Wrench].Weight = 15;
+	Nouns[Wrench].Word = "WRENCH";
+
+	Nouns[OfficeDrawer].CanCarry = false;
+	Nouns[OfficeDrawer].Code = OfficeDrawer;
+	Nouns[OfficeDrawer].Description = "a finely crafted mahogany drawer.";
+	Nouns[OfficeDrawer].IsWeapon = false;
+	Nouns[OfficeDrawer].Weight = 100;
+	Nouns[OfficeDrawer].Word = "DRAWER";
+
+	Nouns[Battery].CanCarry = true;
+	Nouns[Battery].Code = Battery;
+	Nouns[Battery].Description = "a gently humming battery.";
+	Nouns[Battery].IsWeapon = false;
+	Nouns[Battery].Weight = 20;
+	Nouns[Battery].Word = "BATTERY";
+}
+
+bool Parse(int& OUTLocation, std::string Word1, std::string Word2, Word* Directions, Word* Verbs, Noun* Nouns, Room* Rooms)
 {
 	for (int i = 0; i < DIRECTIONSNo; i++) 
 	{
@@ -288,6 +356,7 @@ bool Parse(int& OUTLocation, std::string Word1, std::string Word2, Word* Directi
 			}
 		}
 	}
+	//'Trap' verb and encode.
 	int VerbCode = NONE;
 	for (int i = 0; i < VERBSNo; i++) 
 	{
@@ -297,9 +366,32 @@ bool Parse(int& OUTLocation, std::string Word1, std::string Word2, Word* Directi
 			break;
 		}
 	}
+	//'Trap' noun and encode.
+	int NounCode = NONE;
+	if (Word2 != "")
+	{
+		for (int i = 0; i < NOUNSNo; i++) 
+		{
+			if (Word2 == Nouns[i].Word) 
+			{
+				NounCode = Nouns[i].Code;
+				break;
+			}
+		}
+	}
 	if (VerbCode == Look) 
 	{
 		LookAround(OUTLocation, Rooms, Directions);
+		return true;
+	}
+	if (VerbCode == Help)
+	{
+		std::cout << "This is Laurk, a text based adventure.\n";
+		std::cout << "Interact with the world around you using basic verbs and nouns,\n";
+		std::cout << "using a maximum of two words.\n";
+		std::cout << "VERBS:\n";
+		for (int i = 0; i < VERBSNo; i++)
+		{ std::cout << Verbs[i].word << std::endl; }
 		return true;
 	}
 	std::cout << "No valid command recognised, type help if youre stuck.\n";
