@@ -4,12 +4,30 @@ Class to hold all character information and performs any changes to characters.
 
 #pragma once
 
+#ifndef CHARACTER_H
+#define CHARACTER_H
+
 #include <string>
 #include <iostream>
+#include "Nouns.h"
 
-class Inventory;
+class Inventory
+{
+public:
+	Inventory();
+	void PickUp(Noun);
+	void DropItem(Noun);
+	void ReadInventory();
 
-class Character //: public Inventory
+private:
+	int CurrentWeight;
+	const int MaxWeight = 50;
+	std::vector<Noun> InventoryItems;
+	const std::string OverweightWarning = "Your bag is too heavy!\n";
+
+};
+
+class Character : public Inventory
 {
 public:
 	Character(int);
@@ -37,3 +55,5 @@ private:
 
 };
 
+
+#endif // CHARACTER_H

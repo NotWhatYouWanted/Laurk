@@ -6,20 +6,7 @@
 //Game loop and main functions.
 void GameIntro();
 
-//Map Management
-enum ERooms {
-	Hangar,
-	Freezer,
-	Kitchen,
-	CorridoorN,
-	Office,
-	Reception,
-	AmmoStoreN,
-	CorridoorS,
-	MaintRoom,
-	AmmoStoreS,
-	Dorm,
-	Lab};
+//Map Management see Nouns.h for Rooms enumeration
 const int ROOMSNo = 12;
 enum EDirections {North, East, South, West};
 const int NONE = -1;
@@ -32,32 +19,15 @@ struct Room
 	int Exits[DIRECTIONSNo];
 };
 void SetRooms(Room*);
-
-//User input handling
-enum EVerbs {Inventory, Look, Use, Get, Drop, Open, Close, Attack, Help};
-const int VERBSNo = 9;
-enum ENouns {LabDoor, Tape, Knife, BrokenLever, Wrench, OfficeDrawer, Battery};
-const int NOUNSNo = 7;
-struct Word
-{
-	std::string word;
-	int Code;
-};
-struct Noun 
-{
-	std::string Word;
-	std::string Description;
-	int Location;
-	int Code;
-	int Weight;
-	bool CanCarry;
-	bool CanOpen;
-	bool IsWeapon;
-};
-bool GetCommand(std::string, std::string&, std::string&);
 void SetDirections(Word*);
-void SetVerbs(Word*);
-void SetNouns(Noun*);
+
+//User input handling see Nouns.h for Map, Word and Noun definitions.
+enum EVerbs { Inventory, Look, Use, Get, Drop, Open, Close, Attack, Help };
+const int VERBSNo = 9;
+void SetVerbs(Word* Verbs);
+void SetNouns(Noun* Nouns);
+
+bool GetCommand(std::string, std::string&, std::string&);
 bool Parse(int& OUTLocation, std::string, std::string, Word* Directions, Word* Verbs, Noun* Nouns, Room*, Character&);
 void LookAround(int Location, Room*, Word*, Noun*);
 
@@ -102,73 +72,6 @@ void GameIntro()
 }
 
 //Splits input by space stored in 'delim', stores in vector and then outputs to words1,2.
-bool GetCommand(std::string Input, std::string& OUTWord1, std::string& OUTWord2)
-{
-	std::string Buffer;
-	std::vector<std::string> Words;
-	char Delim = ' ';
-	size_t i, j;
-
-	for (i = 0; i < Input.size(); i++)
-	{
-		if (Input.at(i) != Delim)
-		{
-			Buffer.insert(Buffer.end(), Input.at(i));
-		}
-		if (i == Input.size() - 1)
-		{
-			Words.push_back(Buffer);
-			Buffer.clear();
-		}
-		if (Input.at(i) == Delim)
-		{
-			Words.push_back(Buffer);
-			Buffer.clear();
-		}
-	}
-
-	//TODO work out removal of 1st character being space
-	///Removes blank invalid strings
-	for (i = Words.size() - 1; i > 0; i--)
-	{
-		if (Words.at(i) == "")
-		{ Words.erase(Words.begin() + i); }
-	}
-
-	//Convert to UPPER
-	for (i = 0; i < Words.size(); i++)
-	{
-		for (j = 0; j < Words.at(i).size(); j++)
-		{
-			if(islower(Words.at(i).at(j)))
-			{ Words.at(i).at(j) = toupper(Words.at(i).at(j)); }
-		}
-	}
-
-	if (Words.size() == 0)
-	{
-		std::cout << "No command given...\n";
-		return false;
-	}
-	if (Words.size() == 1)
-	{
-		OUTWord1 = Words.at(0); 
-		return true;
-	}
-	if (Words.size() == 2)
-	{
-		OUTWord1 = Words.at(0);
-		OUTWord2 = Words.at(1);
-		return true;
-	}
-	if (Words.size() > 2) 
-	{
-		std::cout << "Your command is too long or started with a space,\nplease break it down into 1 or 2 word commands, if youre struggling type help.\n";
-		return false;
-	}
-
-	return true;
-}
 
 void SetRooms(Room* Room)
 {
@@ -355,6 +258,78 @@ void SetNouns(Noun* Nouns)
 	Nouns[Battery].IsWeapon = false;
 	Nouns[Battery].Weight = 20;
 	Nouns[Battery].Word = "BATTERY";
+}
+
+bool GetCommand(std::string Input, std::string& OUTWord1, std::string& OUTWord2)
+{
+	std::string Buffer;
+	std::vector<std::string> Words;
+	char Delim = ' ';
+	size_t i, j;
+
+	for (i = 0; i < Input.size(); i++)
+	{
+		if (Input.at(i) != Delim)
+		{
+			Buffer.insert(Buffer.end(), Input.at(i));
+		}
+		if (i == Input.size() - 1)
+		{
+			Words.push_back(Buffer);
+			Buffer.clear();
+		}
+		if (Input.at(i) == Delim)
+		{
+			Words.push_back(Buffer);
+			Buffer.clear();
+		}
+	}
+
+	//TODO work out removal of 1st character being space
+	///Removes blank invalid strings
+	for (i = Words.size() - 1; i > 0; i--)
+	{
+		if (Words.at(i) == "")
+		{
+			Words.erase(Words.begin() + i);
+		}
+	}
+
+	//Convert to UPPER
+	for (i = 0; i < Words.size(); i++)
+	{
+		for (j = 0; j < Words.at(i).size(); j++)
+		{
+			if (islower(Words.at(i).at(j)))
+			{
+				Words.at(i).at(j) = toupper(Words.at(i).at(j));
+			}
+		}
+	}
+
+	if (Words.size() == 0)
+	{
+		std::cout << "No command given...\n";
+		return false;
+	}
+	if (Words.size() == 1)
+	{
+		OUTWord1 = Words.at(0);
+		return true;
+	}
+	if (Words.size() == 2)
+	{
+		OUTWord1 = Words.at(0);
+		OUTWord2 = Words.at(1);
+		return true;
+	}
+	if (Words.size() > 2)
+	{
+		std::cout << "Your command is too long or started with a space,\nplease break it down into 1 or 2 word commands, if youre struggling type help.\n";
+		return false;
+	}
+
+	return true;
 }
 
 bool Parse(int& OUTLocation, std::string Word1, std::string Word2, Word* Directions, Word* Verbs, Noun* Nouns, Room* Rooms, Character& Player)
