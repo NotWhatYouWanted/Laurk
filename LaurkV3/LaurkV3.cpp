@@ -409,10 +409,17 @@ bool Parse(int& OUTLocation, std::string Word1, std::string Word2, Word* Directi
 			if (Nouns[NounCode].CanCarry)
 			{
 				Player.PickUp(&Nouns[NounCode]);
+				Nouns[NounCode].Location = NONE;
 			}
 			else { std::cout << "You cant pick that up...\n"; }
 		}
 		else { std::cout << "I cant see a "<< Nouns[NounCode].Name << " anywhere..\n"; }
+		return true;
+	}
+	if (VerbCode == Drop)
+	{
+		Player.DropItem(&Nouns[NounCode]);
+		Nouns[NounCode].Location = OUTLocation;
 		return true;
 	}
 	if (VerbCode == Open) 
