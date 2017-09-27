@@ -3,21 +3,17 @@
 #ifndef NOUNS_H
 #define NOUNS_H
 
-enum ERooms {
-	Hangar,
-	Freezer,
-	Kitchen,
-	CorridoorN,
-	Office,
-	Reception,
-	AmmoStoreN,
-	CorridoorS,
-	MaintRoom,
-	AmmoStoreS,
-	Dorm,
-	Lab
+
+enum ENouns 
+{
+	LabDoor,
+	Tape,
+	Knife,
+	BrokenLever,
+	Wrench,
+	OfficeDrawer,
+	Battery
 };
-enum ENouns { LabDoor, Tape, Knife, BrokenLever, Wrench, OfficeDrawer, Battery };
 const int NOUNSNo = 7;
 struct Word
 {

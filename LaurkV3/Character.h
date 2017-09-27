@@ -1,5 +1,5 @@
 /*
-Class to hold all character information and performs any changes to characters.
+Class to hold all character information and performs any changes to characters, inherits Inventory.
 */
 
 #pragma once
@@ -9,23 +9,7 @@ Class to hold all character information and performs any changes to characters.
 
 #include <string>
 #include <iostream>
-#include "Nouns.h"
-
-class Inventory
-{
-public:
-	Inventory();
-	void PickUp(Noun*);
-	void DropItem(Noun*);
-	void ReadInventory();
-
-private:
-	int CurrentWeight;
-	const int MaxWeight = 50;
-	std::vector<Noun*> InventoryItems;
-	const std::string OverweightWarning = "Your bag is too heavy!\n";
-
-};
+#include "Inventory.h"
 
 class Character : public Inventory
 {
@@ -40,10 +24,7 @@ public:
 
 	//void Attack(Character*);
 
-	//TODO Give health inc/decrements richer values, bool to show successful?
-	void HealthIncrement();
 	void HealthIncrement(int);
-	void HealthDecrement();
 	void HealthDecrement(int);
 
 private:

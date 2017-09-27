@@ -1,18 +1,33 @@
 // LaurkV3.cpp : Defines the entry point for the console application.
-//
+// See Inventory for Items management (Nouns)
+
 
 #include "stdafx.h"
 
-//Game loop and main functions.
-void GameIntro();
+void GameIntro(); // 
 
-//Map Management see Nouns.h for Rooms enumeration
-const int ROOMSNo = 12;
-enum EDirections {North, East, South, West};
+// Map management.
+enum ERooms
+{
+	Hangar,
+	Freezer,
+	Kitchen,
+	CorridoorN,
+	Office,
+	Reception,
+	AmmoStoreN,
+	CorridoorS,
+	MaintRoom,
+	AmmoStoreS,
+	Dorm,
+	Lab
+};
+enum EDirections { North, East, South, West };
 const int NONE = -1;
 const int LOCKED = -5;
 const int DIRECTIONSNo = 4;
-struct Room 
+const int ROOMSNo = 12;
+struct Room
 {
 	std::string Name;
 	std::string Description;
@@ -21,7 +36,7 @@ struct Room
 void SetRooms(Room*);
 void SetDirections(Word*);
 
-//User input handling see Nouns.h for Map, Word and Noun definitions.
+//User input handling see class files for Map, Word and Noun definitions.
 enum EVerbs { Inventory, Look, Use, Get, Drop, Open, Close, Attack, Help };
 const int VERBSNo = 9;
 void SetVerbs(Word* Verbs);
@@ -39,6 +54,7 @@ int main()
 	//Create array of rooms and set their values.
 	Room Rooms[ROOMSNo];
 	SetRooms(Rooms);
+
 	int Location = Reception; //Setting start location
 	std::cout << "You wake up in " << Rooms[Location].Description << std::endl;
 
@@ -71,8 +87,6 @@ void GameIntro()
 	std::cout << "Would you like to begin a new adventure?\n"; //TODO add save game resource file
 }
 
-//Splits input by space stored in 'delim', stores in vector and then outputs to words1,2.
-
 void SetRooms(Room* Room)
 {
 	Room[Hangar].Name.assign("a cavernous hangar.");
@@ -102,7 +116,7 @@ void SetRooms(Room* Room)
 	Room[CorridoorN].Exits[East] = NONE;
 	Room[CorridoorN].Exits[South] = CorridoorS;
 	Room[CorridoorN].Exits[West] = Kitchen;
-	
+
 	Room[Office].Name.assign("an office.");
 	Room[Office].Description.assign("a grand office with a large mahogany desk.");
 	Room[Office].Exits[North] = NONE;
@@ -159,7 +173,6 @@ void SetRooms(Room* Room)
 	Room[Lab].Exits[South] = NONE;
 	Room[Lab].Exits[West] = NONE;
 }
-
 void SetDirections(Word* Direction)
 {
 	Direction[North].Code = North;
@@ -267,6 +280,7 @@ void SetNouns(Noun* Nouns)
 	Nouns[Battery].Name = "Smooth Battery";
 }
 
+//Splits input by space stored in 'delim', stores in vector and then outputs to words1,2.
 bool GetCommand(std::string Input, std::string& OUTWord1, std::string& OUTWord2)
 {
 	std::string Buffer;
@@ -421,7 +435,7 @@ bool Parse(int& OUTLocation, std::string Word1, std::string Word2, Word* Directi
 		Player.DropItem(&Nouns[NounCode]);
 		Nouns[NounCode].Location = OUTLocation;
 		return true;
-	}
+	}   //TODO Add blank noun checker to Get and Drop.
 	if (VerbCode == Open) 
 	{
 		if (NounCode == NONE)
