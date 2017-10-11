@@ -1,12 +1,15 @@
 // LaurkV3.cpp : Defines the entry point for the console application.
-// See Inventory for Items management (Nouns)
+// See Inventory for Items management
+// See Nouns.h (base class of inventory) for noun and word struct definitions.
 
 
 #include "stdafx.h"
 
-void GameIntro(); // 
+void GameIntro(); 
 
 // Map management.
+//Re-declaration of virtual rooms enum in Inventory.h 
+//TODO Fix inheritance chain so only one ERooms exists.
 enum ERooms
 {
 	Hangar,
@@ -21,7 +24,7 @@ enum ERooms
 	AmmoStoreS,
 	Dorm,
 	Lab
-};
+}; 
 enum EDirections { North, East, South, West };
 const int NONE = -1;
 const int LOCKED = -5;
@@ -49,16 +52,17 @@ void LookAround(int Location, Room*, Word*, Noun*);
 int main()
 {
 	GameIntro();
-	Character Player(20);
+	//TODO add 'difficulty' with different max health on start. 
+	Character Player(20); //Construct character with 20 (default) max health 
 
-	//Create array of rooms and set their values.
+	//Create array of rooms and set their values. MUST take same no of Rooms as defined in function.
 	Room Rooms[ROOMSNo];
 	SetRooms(Rooms);
 
 	int Location = Reception; //Setting start location
 	std::cout << "You wake up in " << Rooms[Location].Description << std::endl;
 
-	//Create any words needed for parsing input.
+	//Create any words needed for parsing input. MUST take same no of arguments as defined in function.
 	Word Directions[DIRECTIONSNo];
 	SetDirections(Directions);
 	Word Verbs[VERBSNo];
@@ -87,6 +91,7 @@ void GameIntro()
 	std::cout << "Would you like to begin a new adventure?\n"; //TODO add save game resource file
 }
 
+//All 'Set' functions are hard-coded, setup a file import/read in future.
 void SetRooms(Room* Room)
 {
 	Room[Hangar].Name.assign("a cavernous hangar.");
@@ -280,7 +285,7 @@ void SetNouns(Noun* Nouns)
 	Nouns[Battery].Name = "Smooth Battery";
 }
 
-//Splits input by space stored in 'delim', stores in vector and then outputs to words1,2.
+//Splits input by character (space) stored in 'delim', stores in vector and then outputs to words1,2.
 bool GetCommand(std::string Input, std::string& OUTWord1, std::string& OUTWord2)
 {
 	std::string Buffer;
@@ -356,7 +361,7 @@ bool GetCommand(std::string Input, std::string& OUTWord1, std::string& OUTWord2)
 bool Parse(int& OUTLocation, std::string Word1, std::string Word2, Word* Directions, Word* Verbs, Noun* Nouns, Room* Rooms, Character& Player)
 {
 	//Move player
-	if(Word1 == "GO" || Word1 == "MOVE") { Word1 = Word2; }
+	if(Word1 == "GO" || Word1 == "MOVE") { Word1 = Word2; } // Remove unnecessary verb.
 	for (int i = 0; i < DIRECTIONSNo; i++) 
 	{
 		if (Word1 == Directions[i].word) 
@@ -418,6 +423,29 @@ bool Parse(int& OUTLocation, std::string Word1, std::string Word2, Word* Directi
 	}
 	if (VerbCode == Get) 
 	{
+		if (NounCode == NONE)
+		{
+			std::cout << "What do you want to pick up?\n";
+			std::getline(std::cin, Word2);
+			//Capitalise word.
+			for (unsigned int i = 0; i < Word2.size(); i++)
+			{
+				if (islower(Word2.at(i)))
+				{
+					Word2.at(i) = toupper(Word2.at(i));
+				}
+			}
+			//Check if noun.
+			for (int i = 0; i < NOUNSNo; i++)
+			{
+				if (Word2 == Nouns[i].Word)
+				{
+					NounCode = Nouns[i].Code;
+					break;
+				}
+			}
+		}
+
 		if (Nouns[NounCode].Location == OUTLocation)
 		{
 			if (Nouns[NounCode].CanCarry)
@@ -432,10 +460,33 @@ bool Parse(int& OUTLocation, std::string Word1, std::string Word2, Word* Directi
 	}
 	if (VerbCode == Drop)
 	{
+		if (NounCode == NONE)
+		{
+			std::cout << "What do you want to drop?\n";
+			std::getline(std::cin, Word2);
+			//Capitalise word.
+			for (unsigned int i = 0; i < Word2.size(); i++)
+			{
+				if (islower(Word2.at(i)))
+				{
+					Word2.at(i) = toupper(Word2.at(i));
+				}
+			}
+			//Check if noun.
+			for (int i = 0; i < NOUNSNo; i++)
+			{
+				if (Word2 == Nouns[i].Word)
+				{
+					NounCode = Nouns[i].Code;
+					break;
+				}
+			}
+		}
+
 		Player.DropItem(&Nouns[NounCode]);
 		Nouns[NounCode].Location = OUTLocation;
 		return true;
-	}   //TODO Add blank noun checker to Get and Drop.
+	}   
 	if (VerbCode == Open) 
 	{
 		if (NounCode == NONE)
@@ -530,7 +581,7 @@ void LookAround(int Location, Room* Rooms, Word* Directions, Noun* Nouns)
 	{
 		if (Rooms[Location].Exits[i] > NONE)
 		{
-			//Capitalise direction
+			//Capitalise first letter of direction
 			std::cout << Directions[i].word[0];
 			for (unsigned int j = 1; j < Directions[i].word.size(); j++)
 			{
@@ -554,4 +605,5 @@ void LookAround(int Location, Room* Rooms, Word* Directions, Noun* Nouns)
 		std::cout << " is locked\n";
 		std::cout << std::endl;
 	}
+	else { std::cout << std::endl; }
 }
